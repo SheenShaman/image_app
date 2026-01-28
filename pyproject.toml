@@ -1,0 +1,17 @@
+[project]
+name = "image-app"
+version = "0.1.0"
+description = ""
+authors = [
+    { name = "3D.tech" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "pyqt5 (==5.15.9)",
+    "pyqt5-tools (==5.15.9.3.3)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
