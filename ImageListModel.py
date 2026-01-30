@@ -38,6 +38,11 @@ class ImageListModel:
         for item in os.listdir(self.dir_path):
             item_path = os.path.join(self.dir_path, item)
             if os.path.isfile(item_path):
-                if self.image_file(item):
+                if self.is_image(item):
                     image_files.append(item)
         return sorted(image_files)
+
+
+
+
+
