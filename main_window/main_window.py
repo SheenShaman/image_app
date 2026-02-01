@@ -15,7 +15,6 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-import constants
 from list_model import ImageListModel
 from managers import ImageManager
 
