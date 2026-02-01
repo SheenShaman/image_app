@@ -30,9 +30,13 @@ class MainWindow(QMainWindow):
         self.list_model = ImageListModel()
         self.current_dir: str | None = None
         self.original_pixmap: QPixmap | None = None
+        self.edit_buttons: list[QPushButton] = []
         self.initUI()
 
     def _has_image(self) -> bool:
+        """
+        Проверка наличия изображения
+        """
         try:
             _ = self.image_manager.current_image
             return True
@@ -95,7 +99,10 @@ class MainWindow(QMainWindow):
         except Exception as e:  # ошибки связанные с загрузкой
             print(e)
             return
+        # отображение изображения
         self.show_image(image)
+        # включаем кнопки
+        self.set_edit_buttons_enabled(True)
 
     def show_image(self, image: Image):
         """
@@ -115,10 +122,11 @@ class MainWindow(QMainWindow):
         """
         if not self.original_pixmap or not hasattr(self, "image_label"):
             return
-
+        # изменение размеров под изображение
         scaled = self.original_pixmap.scaled(
             self.image_label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation
         )
+        # установка новых размеров
         self.image_label.setPixmap(scaled)
 
     def select_directory(self):
@@ -137,7 +145,10 @@ class MainWindow(QMainWindow):
         except Exception as e:
             print(e)
             return
+        # обновление списка изображений
         self.update_file_list()
+        # отключение кнопки
+        self.set_edit_buttons_enabled(False)
 
     def update_file_list(self):
         """
@@ -159,59 +170,114 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.image_label)
 
         # добавление кнопок
+        btn_save_image = QPushButton("Сохранить")
+        btn_save_image.clicked.connect(self.save_image)
+
         btn_rotate_left = QPushButton("Поворот влево")
         btn_rotate_left.clicked.connect(self.rotate_left)
+
         btn_rotate_right = QPushButton("Поворот вправо")
         btn_rotate_right.clicked.connect(self.rotate_right)
+
         btn_flip_horizontal = QPushButton("Отзеркаливание по горизонтали")
         btn_flip_horizontal.clicked.connect(self.flip_horizontal)
+
         btn_to_grayscale = QPushButton("Ч/Б")
         btn_to_grayscale.clicked.connect(self.to_grayscale)
+
         btn_brighter = QPushButton("Ярче")
         btn_brighter.clicked.connect(lambda: self.change_brightness(130))
+
         btn_darker = QPushButton("Темнее")
         btn_darker.clicked.connect(lambda: self.change_brightness(70))
+
+        btn_reset = QPushButton("Сброс изменений")
+        btn_reset.clicked.connect(self.reset_image)
+
         for btn in [
+            btn_save_image,
             btn_rotate_left,
             btn_rotate_right,
             btn_flip_horizontal,
             btn_to_grayscale,
             btn_brighter,
             btn_darker,
+            btn_reset,
         ]:
+            btn.setEnabled(False)
+            self.edit_buttons.append(btn)
             layout.addWidget(btn)
 
         return layout
 
+    def save_image(self):
+        """
+        Сохранение
+        """
+        if not self._has_image():
+            return
+        self.image_manager.save()
+
     def rotate_left(self):
+        """
+        Поворот налево
+        """
         if not self._has_image():
             return
         self.image_manager.rotate_left()
         self.show_image(self.image_manager.current_image)
 
     def rotate_right(self):
+        """
+        Поворот направо
+        """
         if not self._has_image():
             return
         self.image_manager.rotate_right()
         self.show_image(self.image_manager.current_image)
 
     def flip_horizontal(self):
+        """
+        Отзеркаливание по горизонтали
+        """
         if not self._has_image():
             return
         self.image_manager.flip_horizontal()
         self.show_image(self.image_manager.current_image)
 
     def to_grayscale(self):
+        """
+        Ч/Б
+        """
         if not self._has_image():
             return
         self.image_manager.to_grayscale()
         self.show_image(self.image_manager.current_image)
 
     def change_brightness(self, value: int):
+        """
+        Изменение яркости
+        """
         if not self._has_image():
             return
         self.image_manager.change_brightness(value)
         self.show_image(self.image_manager.current_image)
+
+    def reset_image(self):
+        """
+        Возвращение оригинального изображения
+        """
+        if not self._has_image():
+            return
+        self.image_manager.reset()
+        self.show_image(self.image_manager.current_image)
+
+    def set_edit_buttons_enabled(self, enabled: bool):
+        """
+        Вкл/выкл кнопок
+        """
+        for btn in self.edit_buttons:
+            btn.setEnabled(enabled)
 
     def resizeEvent(self, event: QResizeEvent):
         """
