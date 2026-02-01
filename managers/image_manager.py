@@ -4,6 +4,8 @@ from PIL import Image
 from PIL.ImageEnhance import Brightness
 from PIL.ImageOps import mirror
 
+from constants import MODIFIED_DIRECTORY
+
 
 # Класс для управления картинками
 class ImageManager:
@@ -20,6 +22,7 @@ class ImageManager:
     def __init__(self) -> None:
         self._current_image = None
         self._current_path = None
+        self._original_image = None
 
     @property
     def current_image(self):
@@ -35,17 +38,27 @@ class ImageManager:
     # Загружает картинку и путь до нее
     def load(self, path: str | Path) -> Image.Image:
         self._current_path = Path(path)
-        self.current_image = Image.open(path)
+        image = Image.open(path)
+        self._original_image = image.copy()
+        self.current_image = image
         print(self._current_path)
         return self.current_image
 
-    # Сохраняет картинку
+    # Сохраняет картинку в папку для измененных изображений
     def save(self):
+        modified_dir = self._current_path.parent / MODIFIED_DIRECTORY
+        modified_dir.mkdir(exist_ok=True)
         new_path = (
-            self._current_path.parent
+            modified_dir
             / f"{self._current_path.stem}_modified{self._current_path.suffix}"
         )
         self.current_image.save(new_path)
+
+    # Возвращает оригинал изображения
+    def reset(self):
+        if self._original_image is None:
+            raise ValueError("Нет оригинального изображения")
+        self.current_image = self._original_image.copy()
 
     # Поворот влево
     def rotate_left(self) -> None:
