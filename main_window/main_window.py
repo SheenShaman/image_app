@@ -1,19 +1,22 @@
 import os
 
+from PIL.Image import Image
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPixmap, QResizeEvent
+from PyQt5.QtGui import QImage, QPixmap, QResizeEvent
 from PyQt5.QtWidgets import (
     QFileDialog,
     QHBoxLayout,
     QLabel,
     QListWidget,
+    QListWidgetItem,
     QMainWindow,
     QPushButton,
     QVBoxLayout,
     QWidget,
 )
 
-import constants
+from list_model import ImageListModel
+from managers import ImageManager
 
 
 class MainWindow(QMainWindow):
@@ -23,9 +26,18 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
+        self.image_manager = ImageManager()
+        self.list_model = ImageListModel()
         self.current_dir: str | None = None
         self.original_pixmap: QPixmap | None = None
         self.initUI()
+
+    def _has_image(self) -> bool:
+        try:
+            _ = self.image_manager.current_image
+            return True
+        except ValueError:
+            return False
 
     def initUI(self):
         """
@@ -64,7 +76,7 @@ class MainWindow(QMainWindow):
 
         return layout
 
-    def on_file_selected(self, item: QListWidget):
+    def on_file_selected(self, item: QListWidgetItem):
         """
         Обработка файла
         """
@@ -78,10 +90,22 @@ class MainWindow(QMainWindow):
         """
         Загрузка изображения
         """
-        pixmap = QPixmap(image_path)
-        if pixmap.isNull():
-            print("Не удалось загрузить изображение: ", image_path)
+        try:
+            image = self.image_manager.load(image_path)
+        except Exception as e:  # ошибки связанные с загрузкой
+            print(e)
             return
+        self.show_image(image)
+
+    def show_image(self, image: Image):
+        """
+        Отображение изображения
+        """
+        image = image.convert("RGBA")
+        data = image.tobytes("raw", "RGBA")
+        qimage = QImage(data, image.width, image.height, QImage.Format_RGBA8888)
+
+        pixmap = QPixmap.fromImage(qimage)
         self.original_pixmap = pixmap
         self.update_pixmap()
 
@@ -107,22 +131,21 @@ class MainWindow(QMainWindow):
         if not directory:
             return
         self.current_dir = directory
-        self.fill_file_list(directory)
 
-    def fill_file_list(self, directory: str):
+        try:
+            self.list_model.scan_directory(directory)
+        except Exception as e:
+            print(e)
+            return
+        self.update_file_list()
+
+    def update_file_list(self):
         """
         Заполняет files_list изображениями из папки
         """
         self.files_list.clear()
-        files = os.listdir(directory)
-
-        image_files = [
-            file
-            for file in files
-            if file.lower().endswith(constants.IMAGE_FORMATS)
-        ]
-        for file in image_files:
-            self.files_list.addItem(file)
+        for filename in self.list_model.get_files():
+            self.files_list.addItem(filename)
 
     def create_right_layout(self) -> QVBoxLayout:
         """
@@ -136,10 +159,59 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.image_label)
 
         # добавление кнопок
-        for button in constants.IMAGE_BUTTONS:
-            layout.addWidget(QPushButton(button))
+        btn_rotate_left = QPushButton("Поворот влево")
+        btn_rotate_left.clicked.connect(self.rotate_left)
+        btn_rotate_right = QPushButton("Поворот вправо")
+        btn_rotate_right.clicked.connect(self.rotate_right)
+        btn_flip_horizontal = QPushButton("Отзеркаливание по горизонтали")
+        btn_flip_horizontal.clicked.connect(self.flip_horizontal)
+        btn_to_grayscale = QPushButton("Ч/Б")
+        btn_to_grayscale.clicked.connect(self.to_grayscale)
+        btn_brighter = QPushButton("Ярче")
+        btn_brighter.clicked.connect(lambda: self.change_brightness(130))
+        btn_darker = QPushButton("Темнее")
+        btn_darker.clicked.connect(lambda: self.change_brightness(70))
+        for btn in [
+            btn_rotate_left,
+            btn_rotate_right,
+            btn_flip_horizontal,
+            btn_to_grayscale,
+            btn_brighter,
+            btn_darker,
+        ]:
+            layout.addWidget(btn)
 
         return layout
+
+    def rotate_left(self):
+        if not self._has_image():
+            return
+        self.image_manager.rotate_left()
+        self.show_image(self.image_manager.current_image)
+
+    def rotate_right(self):
+        if not self._has_image():
+            return
+        self.image_manager.rotate_right()
+        self.show_image(self.image_manager.current_image)
+
+    def flip_horizontal(self):
+        if not self._has_image():
+            return
+        self.image_manager.flip_horizontal()
+        self.show_image(self.image_manager.current_image)
+
+    def to_grayscale(self):
+        if not self._has_image():
+            return
+        self.image_manager.to_grayscale()
+        self.show_image(self.image_manager.current_image)
+
+    def change_brightness(self, value: int):
+        if not self._has_image():
+            return
+        self.image_manager.change_brightness(value)
+        self.show_image(self.image_manager.current_image)
 
     def resizeEvent(self, event: QResizeEvent):
         """

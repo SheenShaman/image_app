@@ -5,7 +5,6 @@ from PIL.ImageEnhance import Brightness
 from PIL.ImageOps import mirror
 
 
-# TODO: Подумать над возвратом картинки сразу после применения фильтра
 # Класс для управления картинками
 class ImageManager:
     """Пример использования класса ImageManager
@@ -66,6 +65,9 @@ class ImageManager:
 
     # Меняет яркость
     def change_brightness(self, delta: int = 100):
-        """Меняет яркость картинки. По дефолту 100 - оригинальная картинка, 0 - полностью черная"""
+        """
+        Меняет яркость картинки. По дефолту 100 - оригинальная картинка,
+        0 - полностью черная
+        """
         delta_float = float(delta / 100)
         self.current_image = Brightness(self.current_image).enhance(delta_float)
