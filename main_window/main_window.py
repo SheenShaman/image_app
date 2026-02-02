@@ -11,6 +11,7 @@ from PyQt5.QtWidgets import (
     QListWidget,
     QListWidgetItem,
     QMainWindow,
+    QMessageBox,
     QPushButton,
     QVBoxLayout,
     QWidget,
@@ -99,7 +100,7 @@ class MainWindow(QMainWindow):
 
     def load_images(self, image_paths: list[str]):
         """
-        Загрузка изображения
+        Загрузка изображений
         """
         try:
             self.batch_manager.load_images(image_paths)
@@ -224,6 +225,7 @@ class MainWindow(QMainWindow):
         if not self._has_image():
             return
         self.batch_manager.save_all()
+        QMessageBox.information(self, "Готово", "Файлы сохранены")
 
     def rotate_left(self):
         """
