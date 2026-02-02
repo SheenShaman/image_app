@@ -41,7 +41,6 @@ class ImageManager:
         image = Image.open(path)
         self._original_image = image.copy()
         self.current_image = image
-        print(self._current_path)
         return self.current_image
 
     # Сохраняет картинку в папку для измененных изображений
@@ -62,11 +61,11 @@ class ImageManager:
 
     # Поворот влево
     def rotate_left(self) -> None:
-        self.current_image = self.current_image.rotate(90)
+        self.current_image = self.current_image.rotate(90, expand=True)
 
     # Поворот вправо
     def rotate_right(self) -> None:
-        self.current_image = self.current_image.rotate(-90)
+        self.current_image = self.current_image.rotate(-90, expand=True)
 
     # Отзеркаливание
     def flip_horizontal(self) -> None:
