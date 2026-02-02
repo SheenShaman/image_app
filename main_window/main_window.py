@@ -4,19 +4,21 @@ from PIL.Image import Image
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QImage, QPixmap, QResizeEvent
 from PyQt5.QtWidgets import (
+    QAbstractItemView,
     QFileDialog,
     QHBoxLayout,
     QLabel,
     QListWidget,
     QListWidgetItem,
     QMainWindow,
+    QMessageBox,
     QPushButton,
     QVBoxLayout,
     QWidget,
 )
 
 from list_model import ImageListModel
-from managers import ImageManager
+from managers import BatchManager
 
 
 class MainWindow(QMainWindow):
@@ -26,7 +28,7 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.image_manager = ImageManager()
+        self.batch_manager = BatchManager()
         self.list_model = ImageListModel()
         self.current_dir: str | None = None
         self.original_pixmap: QPixmap | None = None
@@ -37,11 +39,9 @@ class MainWindow(QMainWindow):
         """
         Проверка наличия изображения
         """
-        try:
-            _ = self.image_manager.current_image
+        if len(self.batch_manager.images_managers) > 0:
             return True
-        except ValueError:
-            return False
+        return False
 
     def initUI(self):
         """
@@ -72,6 +72,7 @@ class MainWindow(QMainWindow):
 
         # создание кнопки и подключение сигнала
         self.files_list = QListWidget()
+        self.files_list.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.files_list.itemClicked.connect(self.on_file_selected)
 
         layout = QVBoxLayout()
@@ -87,20 +88,27 @@ class MainWindow(QMainWindow):
         if not item or not self.current_dir:
             return
 
-        image_path = os.path.join(self.current_dir, item.text())
-        self.load_image(image_path)
+        selected_files = []
+        for file in self.files_list.selectedItems():
+            image_path = os.path.join(self.current_dir, file.text())
+            selected_files.append(image_path)
+        self.batch_manager.images_managers.clear()
+        if not selected_files:
+            self.set_edit_buttons_enabled(False)
+            return
+        self.load_images(selected_files)
 
-    def load_image(self, image_path: str):
+    def load_images(self, image_paths: list[str]):
         """
-        Загрузка изображения
+        Загрузка изображений
         """
         try:
-            image = self.image_manager.load(image_path)
+            self.batch_manager.load_images(image_paths)
         except Exception as e:  # ошибки связанные с загрузкой
             print(e)
             return
         # отображение изображения
-        self.show_image(image)
+        self.show_image(self.batch_manager.images_managers[-1].current_image)
         # включаем кнопки
         self.set_edit_buttons_enabled(True)
 
@@ -216,7 +224,8 @@ class MainWindow(QMainWindow):
         """
         if not self._has_image():
             return
-        self.image_manager.save()
+        self.batch_manager.save_all()
+        QMessageBox.information(self, "Готово", "Файлы сохранены")
 
     def rotate_left(self):
         """
@@ -224,8 +233,8 @@ class MainWindow(QMainWindow):
         """
         if not self._has_image():
             return
-        self.image_manager.rotate_left()
-        self.show_image(self.image_manager.current_image)
+        self.batch_manager.apply_action(lambda manager: manager.rotate_left())
+        self.show_image(self.batch_manager.images_managers[-1].current_image)
 
     def rotate_right(self):
         """
@@ -233,8 +242,8 @@ class MainWindow(QMainWindow):
         """
         if not self._has_image():
             return
-        self.image_manager.rotate_right()
-        self.show_image(self.image_manager.current_image)
+        self.batch_manager.apply_action(lambda manager: manager.rotate_right())
+        self.show_image(self.batch_manager.images_managers[-1].current_image)
 
     def flip_horizontal(self):
         """
@@ -242,8 +251,10 @@ class MainWindow(QMainWindow):
         """
         if not self._has_image():
             return
-        self.image_manager.flip_horizontal()
-        self.show_image(self.image_manager.current_image)
+        self.batch_manager.apply_action(
+            lambda manager: manager.flip_horizontal()
+        )
+        self.show_image(self.batch_manager.images_managers[-1].current_image)
 
     def to_grayscale(self):
         """
@@ -251,8 +262,8 @@ class MainWindow(QMainWindow):
         """
         if not self._has_image():
             return
-        self.image_manager.to_grayscale()
-        self.show_image(self.image_manager.current_image)
+        self.batch_manager.apply_action(lambda manager: manager.to_grayscale())
+        self.show_image(self.batch_manager.images_managers[-1].current_image)
 
     def change_brightness(self, value: int):
         """
@@ -260,8 +271,10 @@ class MainWindow(QMainWindow):
         """
         if not self._has_image():
             return
-        self.image_manager.change_brightness(value)
-        self.show_image(self.image_manager.current_image)
+        self.batch_manager.apply_action(
+            lambda manager: manager.change_brightness(value)
+        )
+        self.show_image(self.batch_manager.images_managers[-1].current_image)
 
     def reset_image(self):
         """
@@ -269,8 +282,9 @@ class MainWindow(QMainWindow):
         """
         if not self._has_image():
             return
-        self.image_manager.reset()
-        self.show_image(self.image_manager.current_image)
+        self.batch_manager.apply_action(lambda manager: manager.reset())
+        self.show_image(self.batch_manager.images_managers[-1].current_image)
+        QMessageBox.information(self, "Готово", "Изображение сброшено")
 
     def set_edit_buttons_enabled(self, enabled: bool):
         """
