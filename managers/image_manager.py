@@ -41,7 +41,6 @@ class ImageManager:
         image = Image.open(path)
         self._original_image = image.copy()
         self.current_image = image
-        print(self._current_path)
         return self.current_image
 
     # Сохраняет картинку в папку для измененных изображений
