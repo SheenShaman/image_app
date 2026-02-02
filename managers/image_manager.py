@@ -61,11 +61,11 @@ class ImageManager:
 
     # Поворот влево
     def rotate_left(self) -> None:
-        self.current_image = self.current_image.rotate(90)
+        self.current_image = self.current_image.rotate(90, expand=True)
 
     # Поворот вправо
     def rotate_right(self) -> None:
-        self.current_image = self.current_image.rotate(-90)
+        self.current_image = self.current_image.rotate(-90, expand=True)
 
     # Отзеркаливание
     def flip_horizontal(self) -> None:
