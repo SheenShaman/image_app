@@ -284,6 +284,7 @@ class MainWindow(QMainWindow):
             return
         self.batch_manager.apply_action(lambda manager: manager.reset())
         self.show_image(self.batch_manager.images_managers[-1].current_image)
+        QMessageBox.information(self, "Готово", "Изображение сброшено")
 
     def set_edit_buttons_enabled(self, enabled: bool):
         """
