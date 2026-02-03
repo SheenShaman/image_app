@@ -24,7 +24,6 @@ poetry run python main.py
 ```bat
 build.bat
 ```
-Итоговый файл `PhotoShelf.exe` появляется в `dist` (или в корне, если в `build.bat` задан `--distpath .`).
 
 ## Поддерживаемые форматы
 `.jpg`, `.jpeg`, `.png`, `.bmp`, `.gif`
