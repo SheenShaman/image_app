@@ -12,19 +12,28 @@ class TestModel:
         result = ImageListModel.scan_directory(dir_path=test_path)
         assert isinstance(result, list)
 
-
     def test_is_image(self):
-        assert ImageListModel.is_image("photo.jpg") == True
-        assert ImageListModel.is_image("image.png") == True
-        assert ImageListModel.is_image("animation.gif") == True
-        assert ImageListModel.is_image("picture.bmp") == True
+        model = ImageListModel()
+        assert model.is_image("photo.jpg") is True
+        assert model.is_image("image.png") is True
+        assert model.is_image("animation.gif") is True
+        assert model.is_image("picture.bmp") is True
 
     def test_get_files(self):
         current_dir = os.path.dirname(__file__)
-        result = ImageListModel.get_files(current_dir)
-        assert isinstance(result, list)
+        try:
+            model = ImageListModel(current_dir)
+        except TypeError:
+            model = ImageListModel()
+            model.dir_path = current_dir
 
+        files = model.get_files()
 
-object_1 = TestModel()
+        assert type(files) == list
+        assert files is not None
+        if files:
+            for file in files[:3]:
+                assert isinstance(file, str)
+
 
 
