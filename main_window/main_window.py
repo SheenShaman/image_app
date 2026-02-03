@@ -2,7 +2,7 @@ import os
 
 from PIL.Image import Image
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QImage, QPixmap, QResizeEvent
+from PyQt5.QtGui import QIcon, QImage, QPixmap, QResizeEvent
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QFileDialog,
@@ -58,6 +58,7 @@ class MainWindow(QMainWindow):
         main_layout.addLayout(self.create_right_layout(), 3)
 
         self.setWindowTitle("PhotoShelf")
+        self.setWindowIcon(QIcon("favicon.ico"))
         self.resize(900, 600)
         self.show()
 
